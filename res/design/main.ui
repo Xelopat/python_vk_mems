@@ -17,9 +17,9 @@
    <widget class="QPushButton" name="start">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>310</x>
       <y>380</y>
-      <width>161</width>
+      <width>171</width>
       <height>61</height>
      </rect>
     </property>
@@ -113,8 +113,8 @@
    <widget class="QPushButton" name="auth">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>80</y>
+      <x>340</x>
+      <y>70</y>
       <width>111</width>
       <height>31</height>
      </rect>
@@ -133,9 +133,9 @@
    <widget class="QPushButton" name="reload">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>310</x>
       <y>500</y>
-      <width>161</width>
+      <width>171</width>
       <height>31</height>
      </rect>
     </property>

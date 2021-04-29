@@ -136,7 +136,7 @@
      <string>Назад</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="Commit">
+   <widget class="QPushButton" name="commit">
     <property name="geometry">
      <rect>
       <x>370</x>

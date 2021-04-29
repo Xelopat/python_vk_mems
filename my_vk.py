@@ -1,31 +1,16 @@
 import json
-from urllib import request
 
 from vk_api import VkApi
 
 
-def remove_group(remove_in):
-    try:
-        with open("res/all_groups.json", "r") as read_file:
-            data = json.load(read_file)
-    except FileNotFoundError:
-        data = []
-    for i in remove_in.split():
-        for j in range(len(data)):
-            if data[j]["id"] == i:
-                del data[j]
-                break
-    with open("res/all_groups.json", "w") as write_file:
-        json.dump(data, write_file)
-
-
 class vk_class:
     def __init__(self):
-        self.prop_data = {"login": "", "password": "", "multiplier": 1, "group": 0}
+        self.user = 0
+        self.prop_data = {"login": "", "password": "", "multiplier": 1, "group": ""}
         self.multiplier = 1
         self.group_id = 0
-        self.login = "+79913396779"
-        self.password = "Barsik262"
+        self.login = ""
+        self.password = ""
         try:
             with open("res/properties.json", "r") as read_file_prop:
                 self.prop_data = json.load(read_file_prop)
@@ -62,9 +47,10 @@ class vk_class:
             link = []
             data["img"] = link
             try:
+                link = []
                 for i in get_post["attachments"]:
+                    link.append(i[i["type"]]["sizes"][-1]["url"])
                     if "attachments" in data:
-                        link.append(i[i["type"]]["sizes"][0]["url"])
                         try:
                             data["attachments"].append(
                                 i["type"] + str(data["owner_id"]) + "_" + str(i[i["type"]]["id"]))
@@ -98,6 +84,7 @@ class vk_class:
             new_data.append({"id": i["id"], "likes": likes // count})
         with open("res/all_groups.json", "w") as write_file:
             json.dump(new_data, write_file)
+        return len(new_data)
 
     def append_group(self, groups_in):
         groups = groups_in.split()
@@ -116,14 +103,15 @@ class vk_class:
             data.append({"id": str(req[0]["owner_id"]), "likes": likes // count})
         yet = []
         for i in range(len(data) - 1, -1, -1):
-            if data[i].keys() in yet:
+            if data[i]["id"] in yet:
                 del data[i]
             else:
-                yet.append(data[i].keys())
+                yet.append(data[i]["id"])
         with open("res/all_groups.json", "w") as write_file:
             json.dump(data, write_file)
+        return len(data)
 
-    def post(self):
+    def post(self, next_group=0):
         to_post = []
         try:
             with open("res/yet.txt", "r") as read_file:
@@ -135,19 +123,31 @@ class vk_class:
                 data = json.load(read_file)
         except FileNotFoundError:
             data = []
-        for i in data:
-            req = self.get_posts(i["id"])
-            for j in req:
-                if j["likes"] > i["likes"] * self.multiplier and j["ad"] == 0 and not (str(j["post_id"]) in yet):
-                    yet += str(j["post_id"]) + " "
-                    to_post.append(
-                        {"link": ('wall' + str(j['owner_id']) + '_' + str(j["post_id"])), "kf": j["likes"] / j["views"],
-                         "info": "Лайки: " + str(j["likes"]) + "\nПросмотры: " + str(j["views"]), "text": j["text"],
-                         "attachment": j["attachments"], "img": j["link"]})
-        with open("res/yet.txt", "w") as write_file:
-            write_file.write(yet)
-        return to_post
+        if next_group == len(data):
+            return ["end", "end", "end"]
+        req = self.get_posts(data[next_group]["id"])
+        for j in req:
+            if j["likes"] > data[next_group]["likes"] * self.multiplier and j["ad"] == 0 and not (
+                    str(j["post_id"]) in yet):
+                yet += str(j["post_id"]) + " "
+                to_post.append(
+                    {"link": ('wall' + str(j['owner_id']) + '_' + str(j["post_id"])), "kf": j["likes"] / j["views"],
+                     "info": "Лайки: " + str(j["likes"]) + "\nПросмотры: " + str(j["views"]), "text": j["text"],
+                     "attachment": j["attachments"], "img": j["img"]})
+        return [to_post, int(next_group / (len(data) - 1) * 100), next_group + 1]
 
-
-new = vk_class()
-new.get_posts(count=1, owner="https://vk.com/lmaoaay")
+    @staticmethod
+    def remove_group(remove_in):
+        try:
+            with open("res/all_groups.json", "r") as read_file:
+                data = json.load(read_file)
+        except FileNotFoundError:
+            data = []
+        for i in remove_in.split():
+            for j in range(len(data)):
+                if data[j]["id"] == i:
+                    del data[j]
+                    break
+        with open("res/all_groups.json", "w") as write_file:
+            json.dump(data, write_file)
+        return len(data)
