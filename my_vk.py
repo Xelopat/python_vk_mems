@@ -131,10 +131,14 @@ class vk_class:
                     str(j["post_id"]) in yet):
                 yet += str(j["post_id"]) + " "
                 to_post.append(
-                    {"link": ('wall' + str(j['owner_id']) + '_' + str(j["post_id"])), "kf": j["likes"] / j["views"],
-                     "info": "Лайки: " + str(j["likes"]) + "\nПросмотры: " + str(j["views"]), "text": j["text"],
+                    {"link": ('wall' + str(j['owner_id']) + '_' + str(j["post_id"])), "owner_id": j['owner_id'],
+                     "kf": j["likes"] / j["views"],
+                     "info": "Лайки: " + str(j["likes"]) + "Просмотры: " + str(j["views"]), "text": j["text"],
                      "attachment": j["attachments"], "img": j["img"]})
         return [to_post, int(next_group / (len(data) - 1) * 100), next_group + 1]
+
+    def posting(self, message, attachment, owner_id):
+        self.vk.wall.post(message=message, attachment=attachment, owner_id=owner_id)
 
     @staticmethod
     def remove_group(remove_in):

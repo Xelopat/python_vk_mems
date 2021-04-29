@@ -90,16 +90,6 @@
      <string>Удалить</string>
     </property>
    </widget>
-   <widget class="QTextEdit" name="input_append">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>190</y>
-      <width>101</width>
-      <height>31</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QTextEdit" name="input_remove">
     <property name="geometry">
      <rect>
@@ -148,6 +138,16 @@
     </property>
     <property name="text">
      <string>Обновить данные</string>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="input_append">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>190</y>
+      <width>101</width>
+      <height>31</height>
+     </rect>
     </property>
    </widget>
   </widget>

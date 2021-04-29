@@ -28,13 +28,13 @@ class MainWindow(QtWidgets.QMainWindow, main_win):
         self.dialog.ok.clicked.connect(lambda: self.close_dialog())
 
     def append_group(self):
-        self.input_append.setText("")
         count = vk.append_group(self.input_append.toPlainText())
+        self.input_append.setText("")
         self.open_dialog("Всего групп: " + str(count))
 
     def remove_group(self):
-        self.input_remove.setText("")
         count = vk.remove_group(self.input_remove.toPlainText())
+        self.input_remove.setText("")
         self.open_dialog("Всего групп: " + str(count))
 
     def reload_group(self):
@@ -81,14 +81,22 @@ class Properties(QtWidgets.QMainWindow, properties_win):
 class Post(QtWidgets.QMainWindow, post_win):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+        self.all_posts = []
         self.now_img = 0
         self.pixmap = []
-        self.setupUi(self)
         self.i_think = []
         self.img_right.clicked.connect(lambda: self.next_picture())
         self.img_left.clicked.connect(lambda: self.prev_picture())
+        self.add.clicked.connect(lambda: self.append_post())
+        self.skip.clicked.connect(lambda: self.skip_post())
+        self.block.clicked.connect(lambda: self.remove_group())
 
     def start_posting(self):
+        self.all_posts = []
+        self.now_img = 0
+        self.pixmap = []
+        self.i_think = []
         posting = ""
         i = 0
         while posting != "end":
@@ -102,6 +110,8 @@ class Post(QtWidgets.QMainWindow, post_win):
                 self.show_post()
 
     def show_post(self):
+        if not self.i_think:
+            return
         try:
             os.mkdir("cache", 0o755)
         except OSError:
@@ -109,10 +119,9 @@ class Post(QtWidgets.QMainWindow, post_win):
         self.now_img = 0
         post = self.i_think[0]
         message = post["text"]
-        if message == "":
-            message = "None"
-        message += "\nvk.com/" + post["link"]
         self.message.setText(message)
+        info = "vk.com/" + post["link"] + " " + post["info"]
+        self.info.setText(info)
         self.pixmap = []
         for i in range(len(post["img"])):
             urlretrieve(post["img"][i], f"cache/{i}.jpg")
@@ -125,6 +134,25 @@ class Post(QtWidgets.QMainWindow, post_win):
                 self.pixmap.append(pixmap0.scaled(int(500 / height * height), 500))
         self.img.setPixmap(self.pixmap[0])
         rmtree('cache')
+
+    def append_post(self):
+        message = self.message.toPlainText()
+        attachment = self.i_think[0]["attachment"]
+        owner_id = self.i_think[0]["owner_id"]
+        self.all_posts.append([message, attachment, owner_id])
+        del self.i_think[0]
+        self.show_post()
+        self.write_yet(self.i_think[0]["link"])
+
+    def skip_post(self):
+        del self.i_think[0]
+        self.show_post()
+        self.write_yet(self.i_think[0]["link"])
+
+    def remove_group(self):
+        vk.remove_group(str(self.i_think[0]["owner_id"]))
+        del self.i_think[0]
+        self.show_post()
 
     def next_picture(self):
         self.now_img += 1
@@ -140,8 +168,12 @@ class Post(QtWidgets.QMainWindow, post_win):
 
     @staticmethod
     def write_yet(text):
-        with open("res/yet.txt", "w") as write_file:
-            write_file.write(text)
+        try:
+            with open("res/yet.txt", "a") as write_file:
+                write_file.write(text + " ")
+        except FileNotFoundError:
+            with open("res/yet.txt", "w") as write_file:
+                write_file.write(text + " ")
 
 
 vk = vk_class()
