@@ -137,8 +137,8 @@ class vk_class:
                      "attachment": j["attachments"], "img": j["img"]})
         return [to_post, int(next_group / (len(data) - 1) * 100), next_group + 1]
 
-    def posting(self, message, attachment, owner_id):
-        self.vk.wall.post(message=message, attachment=attachment, owner_id=owner_id)
+    def posting(self, mas):
+        self.vk.wall.post(message=mas[0], attachment=mas[1], owner_id=mas[2])
 
     @staticmethod
     def remove_group(remove_in):

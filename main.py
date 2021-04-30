@@ -2,6 +2,8 @@ import json
 import os
 import sys
 from shutil import rmtree
+from threading import Thread
+from time import sleep
 from urllib.request import urlretrieve
 
 from PyQt5 import QtWidgets, uic
@@ -13,6 +15,23 @@ from my_vk import vk_class
 main_win, _ = loadUiType(os.path.join('res', 'design', 'main.ui'))
 properties_win, _ = loadUiType(os.path.join('res', 'design', 'properties.ui'))
 post_win, _ = loadUiType(os.path.join('res', 'design', 'post.ui'))
+
+
+class MyThread(Thread):
+    def __init__(self, name):
+        Thread.__init__(self)
+        self.work = False
+
+    def run(self):
+        count = 0
+        while self.work:
+            if post_window.all_posts:
+                count += 1
+                vk.posting(post_window.all_posts[0])
+                del post_window.all_posts[0]
+            if count == 50:
+                self.work = False
+            sleep(15)
 
 
 class MainWindow(QtWidgets.QMainWindow, main_win):
@@ -81,6 +100,10 @@ class Properties(QtWidgets.QMainWindow, properties_win):
 class Post(QtWidgets.QMainWindow, post_win):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
+        self.count_posts = 0
+        self.post_thread = Thread()
+        self.post_thread.work = True
+        self.post_thread.run()
         self.setupUi(self)
         self.all_posts = []
         self.now_img = 0
@@ -136,6 +159,7 @@ class Post(QtWidgets.QMainWindow, post_win):
         rmtree('cache')
 
     def append_post(self):
+        self.post_max.setText(str(self.count_posts) + "/50")
         message = self.message.toPlainText()
         attachment = self.i_think[0]["attachment"]
         owner_id = self.i_think[0]["owner_id"]
