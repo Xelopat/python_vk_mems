@@ -128,17 +128,17 @@ class vk_class:
         req = self.get_posts(data[next_group]["id"])
         for j in req:
             if j["likes"] > data[next_group]["likes"] * self.multiplier and j["ad"] == 0 and not (
-                    str(j["post_id"]) in yet):
-                yet += str(j["post_id"]) + " "
+                    'wall' + str(j['owner_id']) + '_' + str(j["post_id"]) in yet):
                 to_post.append(
                     {"link": ('wall' + str(j['owner_id']) + '_' + str(j["post_id"])), "owner_id": j['owner_id'],
                      "kf": j["likes"] / j["views"],
                      "info": "Лайки: " + str(j["likes"]) + "Просмотры: " + str(j["views"]), "text": j["text"],
                      "attachment": j["attachments"], "img": j["img"]})
+                print(yet, 'wall' + str(j['owner_id']) + '_' + str(j["post_id"]))
         return [to_post, int(next_group / (len(data) - 1) * 100), next_group + 1]
 
     def posting(self, mas):
-        self.vk.wall.post(message=mas[0], attachment=mas[1], owner_id=mas[2])
+        self.vk.wall.post(message=mas[0], attachment=mas[1], copyright=mas[2], owner_id=self.group_id)
 
     @staticmethod
     def remove_group(remove_in):

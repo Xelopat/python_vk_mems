@@ -235,7 +235,7 @@ p, li { white-space: pre-wrap; }
      </rect>
     </property>
     <property name="text">
-     <string>0/0</string>
+     <string>0/50</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>

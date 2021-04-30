@@ -1,8 +1,8 @@
 import json
 import os
 import sys
+import threading
 from shutil import rmtree
-from threading import Thread
 from time import sleep
 from urllib.request import urlretrieve
 
@@ -15,23 +15,6 @@ from my_vk import vk_class
 main_win, _ = loadUiType(os.path.join('res', 'design', 'main.ui'))
 properties_win, _ = loadUiType(os.path.join('res', 'design', 'properties.ui'))
 post_win, _ = loadUiType(os.path.join('res', 'design', 'post.ui'))
-
-
-class MyThread(Thread):
-    def __init__(self, name):
-        Thread.__init__(self)
-        self.work = False
-
-    def run(self):
-        count = 0
-        while self.work:
-            if post_window.all_posts:
-                count += 1
-                vk.posting(post_window.all_posts[0])
-                del post_window.all_posts[0]
-            if count == 50:
-                self.work = False
-            sleep(15)
 
 
 class MainWindow(QtWidgets.QMainWindow, main_win):
@@ -101,9 +84,7 @@ class Post(QtWidgets.QMainWindow, post_win):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
         self.count_posts = 0
-        self.post_thread = Thread()
-        self.post_thread.work = True
-        self.post_thread.run()
+        self.work = False
         self.setupUi(self)
         self.all_posts = []
         self.now_img = 0
@@ -115,7 +96,22 @@ class Post(QtWidgets.QMainWindow, post_win):
         self.skip.clicked.connect(lambda: self.skip_post())
         self.block.clicked.connect(lambda: self.remove_group())
 
+    def worker(self):
+        count = 0
+        while self.work:
+            if post_window.all_posts:
+                vk.posting(post_window.all_posts[0])
+                del post_window.all_posts[0]
+                count += 1
+                self.post_max.setText(f"{count}/50")
+            if count == 50:
+                self.work = False
+            sleep(15)
+
     def start_posting(self):
+        self.work = True
+        thread = threading.Thread(target=self.worker)
+        thread.start()
         self.all_posts = []
         self.now_img = 0
         self.pixmap = []
@@ -159,11 +155,10 @@ class Post(QtWidgets.QMainWindow, post_win):
         rmtree('cache')
 
     def append_post(self):
-        self.post_max.setText(str(self.count_posts) + "/50")
         message = self.message.toPlainText()
         attachment = self.i_think[0]["attachment"]
         owner_id = self.i_think[0]["owner_id"]
-        self.all_posts.append([message, attachment, owner_id])
+        self.all_posts.append([message, attachment, "https://vk.com/" + self.i_think[0]["link"]])
         del self.i_think[0]
         self.show_post()
         self.write_yet(self.i_think[0]["link"])
@@ -223,13 +218,13 @@ post_window.cancle.clicked.connect(lambda: end_post())
 
 def start_post():
     w.setCurrentIndex(2)
-    w.setGeometry(w.x(), w.y() - 50, 800, 800)
+    w.setGeometry(w.x(), w.y() - 25, 800, 750)
     post_window.start_posting()
 
 
 def end_post():
     w.setCurrentIndex(0)
-    w.setGeometry(w.x(), w.y() + 100, 800, 600)
+    w.setGeometry(w.x(), w.y() + 50, 800, 600)
 
 
 w.resize(800, 600)
