@@ -1,7 +1,9 @@
 import json
 import os
 import sys
+import threading
 from shutil import rmtree
+from time import sleep
 from urllib.request import urlretrieve
 
 from PyQt5 import QtWidgets, uic
@@ -81,6 +83,8 @@ class Properties(QtWidgets.QMainWindow, properties_win):
 class Post(QtWidgets.QMainWindow, post_win):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
+        self.count_posts = 0
+        self.work = False
         self.setupUi(self)
         self.all_posts = []
         self.now_img = 0
@@ -92,7 +96,26 @@ class Post(QtWidgets.QMainWindow, post_win):
         self.skip.clicked.connect(lambda: self.skip_post())
         self.block.clicked.connect(lambda: self.remove_group())
 
+    def worker(self):
+        count = 0
+        time_last = 15
+        while self.work:
+            if time_last > 15:
+                if post_window.all_posts:
+                    vk.posting(post_window.all_posts[0])
+                    del post_window.all_posts[0]
+                    count += 1
+                    self.post_max.setText(f"{count}/50")
+                    time_last = 0
+                if count == 50:
+                    self.work = False
+            sleep(1)
+            time_last += 1
+
     def start_posting(self):
+        self.work = True
+        thread = threading.Thread(target=self.worker)
+        thread.start()
         self.all_posts = []
         self.now_img = 0
         self.pixmap = []
@@ -132,22 +155,24 @@ class Post(QtWidgets.QMainWindow, post_win):
                 self.pixmap.append(pixmap0.scaled(500, int(500 / width * height)))
             else:
                 self.pixmap.append(pixmap0.scaled(int(500 / height * height), 500))
-        self.img.setPixmap(self.pixmap[0])
+        try:
+            self.img.setPixmap(self.pixmap[0])
+        except IndexError:
+            self.info.setText(info + "No_img")
         rmtree('cache')
 
     def append_post(self):
         message = self.message.toPlainText()
         attachment = self.i_think[0]["attachment"]
-        owner_id = self.i_think[0]["owner_id"]
-        self.all_posts.append([message, attachment, owner_id])
-        del self.i_think[0]
+        self.all_posts.append([message, attachment, "https://vk.com/" + self.i_think[0]["link"]])
         self.show_post()
         self.write_yet(self.i_think[0]["link"])
+        del self.i_think[0]
 
     def skip_post(self):
-        del self.i_think[0]
         self.show_post()
         self.write_yet(self.i_think[0]["link"])
+        del self.i_think[0]
 
     def remove_group(self):
         vk.remove_group(str(self.i_think[0]["owner_id"]))
@@ -199,13 +224,13 @@ post_window.cancle.clicked.connect(lambda: end_post())
 
 def start_post():
     w.setCurrentIndex(2)
-    w.setGeometry(w.x(), w.y() - 50, 800, 800)
+    w.setGeometry(w.x(), w.y() - 25, 800, 750)
     post_window.start_posting()
 
 
 def end_post():
     w.setCurrentIndex(0)
-    w.setGeometry(w.x(), w.y() + 100, 800, 600)
+    w.setGeometry(w.x(), w.y() + 50, 800, 600)
 
 
 w.resize(800, 600)
