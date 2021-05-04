@@ -98,15 +98,19 @@ class Post(QtWidgets.QMainWindow, post_win):
 
     def worker(self):
         count = 0
+        time_last = 15
         while self.work:
-            if post_window.all_posts:
-                vk.posting(post_window.all_posts[0])
-                del post_window.all_posts[0]
-                count += 1
-                self.post_max.setText(f"{count}/50")
-            if count == 50:
-                self.work = False
-            sleep(15)
+            if time_last > 15:
+                if post_window.all_posts:
+                    vk.posting(post_window.all_posts[0])
+                    del post_window.all_posts[0]
+                    count += 1
+                    self.post_max.setText(f"{count}/50")
+                    time_last = 0
+                if count == 50:
+                    self.work = False
+            sleep(1)
+            time_last += 1
 
     def start_posting(self):
         self.work = True
@@ -151,22 +155,24 @@ class Post(QtWidgets.QMainWindow, post_win):
                 self.pixmap.append(pixmap0.scaled(500, int(500 / width * height)))
             else:
                 self.pixmap.append(pixmap0.scaled(int(500 / height * height), 500))
-        self.img.setPixmap(self.pixmap[0])
+        try:
+            self.img.setPixmap(self.pixmap[0])
+        except IndexError:
+            self.info.setText(info + "No_img")
         rmtree('cache')
 
     def append_post(self):
         message = self.message.toPlainText()
         attachment = self.i_think[0]["attachment"]
-        owner_id = self.i_think[0]["owner_id"]
         self.all_posts.append([message, attachment, "https://vk.com/" + self.i_think[0]["link"]])
-        del self.i_think[0]
         self.show_post()
         self.write_yet(self.i_think[0]["link"])
+        del self.i_think[0]
 
     def skip_post(self):
-        del self.i_think[0]
         self.show_post()
         self.write_yet(self.i_think[0]["link"])
+        del self.i_think[0]
 
     def remove_group(self):
         vk.remove_group(str(self.i_think[0]["owner_id"]))

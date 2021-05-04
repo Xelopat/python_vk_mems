@@ -63,7 +63,7 @@ class vk_class:
                             pass
                 data["img"] = link
             except KeyError:
-                pass
+                data["attachments"] = []
             all_posts.append(data)
         return all_posts
 
@@ -127,14 +127,13 @@ class vk_class:
             return ["end", "end", "end"]
         req = self.get_posts(data[next_group]["id"])
         for j in req:
-            if j["likes"] > data[next_group]["likes"] * self.multiplier and j["ad"] == 0 and not (
-                    'wall' + str(j['owner_id']) + '_' + str(j["post_id"]) in yet):
+            link = ('wall' + str(j['owner_id']) + '_' + str(j["post_id"]))
+            if j["likes"] > data[next_group]["likes"] * self.multiplier and j["ad"] == 0 and not (link in yet):
                 to_post.append(
-                    {"link": ('wall' + str(j['owner_id']) + '_' + str(j["post_id"])), "owner_id": j['owner_id'],
+                    {"link": link, "owner_id": j['owner_id'],
                      "kf": j["likes"] / j["views"],
-                     "info": "Лайки: " + str(j["likes"]) + "Просмотры: " + str(j["views"]), "text": j["text"],
+                     "info": "Лайки: " + str(j["likes"]) + " Просмотры: " + str(j["views"]), "text": j["text"],
                      "attachment": j["attachments"], "img": j["img"]})
-                print(yet, 'wall' + str(j['owner_id']) + '_' + str(j["post_id"]))
         return [to_post, int(next_group / (len(data) - 1) * 100), next_group + 1]
 
     def posting(self, mas):
@@ -155,3 +154,15 @@ class vk_class:
         with open("res/all_groups.json", "w") as write_file:
             json.dump(data, write_file)
         return len(data)
+
+'''
+posting = ""
+i = 0
+vk = vk_class()
+while posting != "end":
+            post_list, percent, posting = vk.post(i)
+            if post_list != "end":
+                for x in post_list:
+                    pass
+            i += 1
+'''
