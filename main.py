@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import threading
+import traceback
 from shutil import rmtree
 from time import sleep
 from urllib.request import urlretrieve
@@ -30,14 +31,14 @@ class MainWindow(QtWidgets.QMainWindow, main_win):
         self.dialog.ok.clicked.connect(lambda: self.close_dialog())
 
     def append_group(self):
-        count = vk.append_group(self.input_append.toPlainText())
+        all_count, count = vk.append_group(self.input_append.toPlainText())
         self.input_append.setText("")
-        self.open_dialog("Всего групп: " + str(count))
+        self.open_dialog(f"Всего групп: {str(all_count)} (+{str(count)})")
 
     def remove_group(self):
-        count = vk.remove_group(self.input_remove.toPlainText())
+        all_count, count = vk.remove_group(self.input_append.toPlainText())
         self.input_remove.setText("")
-        self.open_dialog("Всего групп: " + str(count))
+        self.open_dialog(f"Всего групп: {str(all_count)} (+{str(count)})")
 
     def reload_group(self):
         count = vk.reload()
@@ -66,17 +67,18 @@ class Properties(QtWidgets.QMainWindow, properties_win):
         password = self.input_password.toPlainText()
         group_id = self.input_group.toPlainText()
         multiplier = self.input_multiplier.toPlainText()
-        if login == "":
+        if login == "" and "login" in prop_data:
             login = prop_data["login"]
-        if password == "":
+        if password == "" and "password" in prop_data:
             password = prop_data["password"]
-        if group_id == "":
+        if group_id == "" and "group_id" in prop_data:
             group_id = prop_data["group_id"]
-        if multiplier == "":
+        if multiplier == "" and "multiplier" in prop_data:
             multiplier = prop_data["multiplier"]
         prop_data = {"login": login, "password": password, "multiplier": float(multiplier), "group": group_id}
         with open("res/properties.json", "w") as write_file_prop:
             json.dump(prop_data, write_file_prop)
+        vk.set_properties()
         w.setCurrentIndex(0)
 
 
@@ -102,7 +104,9 @@ class Post(QtWidgets.QMainWindow, post_win):
         while self.work:
             if time_last > 15:
                 if post_window.all_posts:
-                    vk.posting(post_window.all_posts[0])
+                    if not vk.posting(post_window.all_posts[0]):
+                        self.work = False
+                        w.setCurrentIndex(0)
                     del post_window.all_posts[0]
                     count += 1
                     self.post_max.setText(f"{count}/50")
@@ -122,18 +126,23 @@ class Post(QtWidgets.QMainWindow, post_win):
         self.i_think = []
         posting = ""
         i = 0
+        count = 0
+        ok = False
         while posting != "end":
-            post_list, percent, posting = vk.post(i)
+            post_list, posting = vk.post(i)
             if post_list != "end":
-                self.progress.setValue(percent)
                 for x in post_list:
+                    count += 1
                     self.i_think.append(x)
+                self.posts_count.setText(str(count))
             i += 1
-            if i == 1:
+            if i > 0 and self.i_think != [] and not ok:
                 self.show_post()
+                ok = True
 
     def show_post(self):
         if not self.i_think:
+            w.setCurrentIndex(0)
             return
         try:
             os.mkdir("cache", 0o755)
@@ -162,19 +171,22 @@ class Post(QtWidgets.QMainWindow, post_win):
         rmtree('cache')
 
     def append_post(self):
+        self.posts_count.setText(str(int(self.posts_count.text()) - 1))
         message = self.message.toPlainText()
         attachment = self.i_think[0]["attachment"]
         self.all_posts.append([message, attachment, "https://vk.com/" + self.i_think[0]["link"]])
-        self.show_post()
         self.write_yet(self.i_think[0]["link"])
         del self.i_think[0]
+        self.show_post()
 
     def skip_post(self):
-        self.show_post()
+        self.posts_count.setText(str(int(self.posts_count.text()) - 1))
         self.write_yet(self.i_think[0]["link"])
         del self.i_think[0]
+        self.show_post()
 
     def remove_group(self):
+        self.posts_count.setText(str(int(self.posts_count.text()) - 1))
         vk.remove_group(str(self.i_think[0]["owner_id"]))
         del self.i_think[0]
         self.show_post()
@@ -200,6 +212,13 @@ class Post(QtWidgets.QMainWindow, post_win):
             with open("res/yet.txt", "w") as write_file:
                 write_file.write(text + " ")
 
+
+def exceptions(exc_type, exc_value, exc_tb):
+    tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+    print("Found error !:", tb)
+
+
+sys.excepthook = exceptions
 
 vk = vk_class()
 app = QtWidgets.QApplication(sys.argv)

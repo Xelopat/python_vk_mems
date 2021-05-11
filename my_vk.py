@@ -24,6 +24,13 @@ class vk_class:
             self.vk = vk_session.get_api()
 
     def set_properties(self):
+        self.prop_data = {"login": "", "password": "", "multiplier": 1, "group": ""}
+        try:
+            with open("res/properties.json", "r") as read_file_prop:
+                self.prop_data = json.load(read_file_prop)
+        except FileNotFoundError:
+            with open("res/properties.json", "w") as write_file_prop:
+                json.dump(self.prop_data, write_file_prop)
         self.multiplier = self.prop_data["multiplier"]
         self.group_id = self.prop_data["group"]
         self.login = self.prop_data["login"]
@@ -102,14 +109,16 @@ class vk_class:
                 count += 1
             data.append({"id": str(req[0]["owner_id"]), "likes": likes // count})
         yet = []
+        count = 0
         for i in range(len(data) - 1, -1, -1):
             if data[i]["id"] in yet:
                 del data[i]
             else:
+                count += 1
                 yet.append(data[i]["id"])
         with open("res/all_groups.json", "w") as write_file:
             json.dump(data, write_file)
-        return len(data)
+        return [len(data), count]
 
     def post(self, next_group=0):
         to_post = []
@@ -124,7 +133,7 @@ class vk_class:
         except FileNotFoundError:
             data = []
         if next_group == len(data):
-            return ["end", "end", "end"]
+            return ["end", "end"]
         req = self.get_posts(data[next_group]["id"])
         for j in req:
             link = ('wall' + str(j['owner_id']) + '_' + str(j["post_id"]))
@@ -134,10 +143,15 @@ class vk_class:
                      "kf": j["likes"] / j["views"],
                      "info": "Лайки: " + str(j["likes"]) + " Просмотры: " + str(j["views"]), "text": j["text"],
                      "attachment": j["attachments"], "img": j["img"]})
-        return [to_post, int(next_group / (len(data) - 1) * 100), next_group + 1]
+        return [to_post, next_group + 1]
 
     def posting(self, mas):
-        self.vk.wall.post(message=mas[0], attachment=mas[1], copyright=mas[2], owner_id=self.group_id)
+        try:
+            self.vk.wall.post(message=mas[0], attachment=mas[1], copyright=mas[2], owner_id=self.group_id)
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
     @staticmethod
     def remove_group(remove_in):
@@ -146,23 +160,13 @@ class vk_class:
                 data = json.load(read_file)
         except FileNotFoundError:
             data = []
+        count = 0
         for i in remove_in.split():
             for j in range(len(data)):
                 if data[j]["id"] == i:
+                    count += 1
                     del data[j]
                     break
         with open("res/all_groups.json", "w") as write_file:
             json.dump(data, write_file)
-        return len(data)
-
-'''
-posting = ""
-i = 0
-vk = vk_class()
-while posting != "end":
-            post_list, percent, posting = vk.post(i)
-            if post_list != "end":
-                for x in post_list:
-                    pass
-            i += 1
-'''
+        return [len(data), count]
