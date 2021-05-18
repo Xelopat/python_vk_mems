@@ -44,8 +44,9 @@ class vk_class:
     def get_posts(self, owner, count=50):
         try:
             get_wall = self.vk.wall.get(owner_id=int(owner), count=count)["items"]
-        except ValueError:
-            get_wall = self.vk.wall.get(domain=owner.split("/")[-1], count=count)["items"]
+        except Exception:
+            get_wall = []
+            print(owner)
         all_posts = []
         for get_post in get_wall:
             data = {"post_id": get_post["id"], "owner_id": get_post["owner_id"], "ad": get_post["marked_as_ads"],

@@ -10,6 +10,7 @@ from urllib.request import urlretrieve
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtGui import QPixmap
 from PyQt5.uic import loadUiType
+from PyQt5 import QtCore
 
 from my_vk import vk_class
 
@@ -98,6 +99,16 @@ class Post(QtWidgets.QMainWindow, post_win):
         self.skip.clicked.connect(lambda: self.skip_post())
         self.block.clicked.connect(lambda: self.remove_group())
 
+    def event(self, e):
+        if e.type() == QtCore.QEvent.KeyPress:
+            if e.text() == "В" or e.text() == "D" or e.text() == "в" or e.text() == "d":
+                self.skip_post()
+            elif e.text() == "Ф" or e.text() == "A" or e.text() == "ф" or e.text() == "а":
+                self.append_post()
+            elif e.text() == "К" or e.text() == "R" or e.text() == "к" or e.text() == "r":
+                self.remove_group()
+        return QtWidgets.QWidget.event(self, e)
+
     def worker(self):
         count = 0
         time_last = 15
@@ -164,6 +175,8 @@ class Post(QtWidgets.QMainWindow, post_win):
                 self.pixmap.append(pixmap0.scaled(500, int(500 / width * height)))
             else:
                 self.pixmap.append(pixmap0.scaled(int(500 / height * height), 500))
+        self.img_right.setText(str(len(self.pixmap)))
+        self.img_left.setText(str(len(self.pixmap)))
         try:
             self.img.setPixmap(self.pixmap[0])
         except IndexError:
@@ -231,6 +244,7 @@ w = QtWidgets.QStackedWidget()
 w.addWidget(main_window)
 w.addWidget(properties_window)
 w.addWidget(post_window)
+w.setGeometry(w.x(), 30, 800, 600)
 
 properties_window.cancle.clicked.connect(lambda: w.setCurrentIndex(0))
 properties_window.commit.clicked.connect(lambda: properties_window.change_prop())
@@ -243,13 +257,13 @@ post_window.cancle.clicked.connect(lambda: end_post())
 
 def start_post():
     w.setCurrentIndex(2)
-    w.setGeometry(w.x(), w.y() - 25, 800, 750)
+    w.setGeometry(w.x(), 30, 1024, 748)
     post_window.start_posting()
 
 
 def end_post():
     w.setCurrentIndex(0)
-    w.setGeometry(w.x(), w.y() + 50, 800, 600)
+    w.setGeometry(w.x(), 30, 800, 600)
 
 
 w.resize(800, 600)
