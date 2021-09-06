@@ -72,8 +72,8 @@ class Properties(QtWidgets.QMainWindow, properties_win):
             login = prop_data["login"]
         if password == "" and "password" in prop_data:
             password = prop_data["password"]
-        if group_id == "" and "group_id" in prop_data:
-            group_id = prop_data["group_id"]
+        if group_id == "" and "group" in prop_data:
+            group_id = prop_data["group"]
         if multiplier == "" and "multiplier" in prop_data:
             multiplier = prop_data["multiplier"]
         prop_data = {"login": login, "password": password, "multiplier": float(multiplier), "group": group_id}
@@ -103,7 +103,7 @@ class Post(QtWidgets.QMainWindow, post_win):
         if e.type() == QtCore.QEvent.KeyPress:
             if e.text() == "В" or e.text() == "D" or e.text() == "в" or e.text() == "d":
                 self.skip_post()
-            elif e.text() == "Ф" or e.text() == "A" or e.text() == "ф" or e.text() == "а":
+            elif e.text() == "Ф" or e.text() == "A" or e.text() == "ф" or e.text() == "a":
                 self.append_post()
             elif e.text() == "К" or e.text() == "R" or e.text() == "к" or e.text() == "r":
                 self.remove_group()
